@@ -28,6 +28,7 @@ data/backups/
 data/exports/
 data/.electron/
 documentation/
+activation-guide/
 *.db
 *.sqlite
 *.sqlite3

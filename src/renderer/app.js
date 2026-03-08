@@ -1,14 +1,14 @@
 /**
  * FILE: src/renderer/app.js
  * PURPOSE: Renderer-side app bootstrap. Handles:
- *   - View routing (top nav)
- *   - Toast notifications
- *   - History panel (right sidebar)
- *   - Shared cache of departments/employees/stocks for dropdowns
- *   - Global window.App object consumed by all view files
+ * - View routing (top nav)
+ * - Toast notifications
+ * - History panel (right sidebar)
+ * - Shared cache of departments/employees/stocks for dropdowns
+ * - Global window.App object consumed by all view files
  * CONNECTED TO: index.html (script tag)
- *               views/add-stocks.js, views/less-stocks.js, views/settings.js
- *               preload.js (window.api.invoke)
+ * views/add-stocks.js, views/less-stocks.js, views/settings.js
+ * preload.js (window.api.invoke)
  */
 
 /* ─── Shared App namespace ────────────────────────────────────────────────── */
@@ -29,23 +29,38 @@ window.App = {
 
   /** Navigate to a named view */
   navigate(viewName) {
+    // 1. Update Navigation Buttons
     document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    const btn = document.querySelector(`.nav-btn[data-view="${viewName}"]`);
+    if (btn) btn.classList.add('active');
 
-    const btn  = document.querySelector(`.nav-btn[data-view="${viewName}"]`);
+    // 2. Update View Visibility
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
     const view = document.getElementById(`view-${viewName}`);
-    if (btn)  btn.classList.add('active');
     if (view) view.classList.add('active');
 
+    // 3. Persistent Session
     try {
       sessionStorage.setItem('activeView', viewName);
     } catch {
       // ignore storage errors
     }
 
-    // Hide history panel on full-width views
+    // 4. PORTABLE ARCHITECT FIX: Handle Layout Grid & History Panel
     const panel = document.getElementById('history-panel');
-    if (panel) panel.style.display = (viewName === 'settings' || viewName === 'rcm' || viewName === 'audit-log') ? 'none' : '';
+    const mainContent = document.getElementById('main-content');
+    
+    // Check if the current view is a "Full Width" view
+    const isFullWidth = (viewName === 'settings' || viewName === 'rcm' || viewName === 'audit-log');
+
+    if (panel) {
+      panel.style.display = isFullWidth ? 'none' : 'flex';
+    }
+
+    if (mainContent) {
+      // If full width, remove the 350px sidebar column from the grid
+      mainContent.style.gridTemplateColumns = isFullWidth ? '1fr' : '1fr 350px';
+    }
   },
 };
 
@@ -66,17 +81,20 @@ window.applyUiPreferences = function(settings = {}) {
   document.documentElement.classList.toggle('ui-font-large', fontSize === 'large');
 };
 
+/** Initialize the specific logic for a view when it is opened */
 function initView(view) {
   if (view === 'add-stocks'  && window.AddStocksView)  return AddStocksView.init();
   if (view === 'less-stocks' && window.LessStocksView) return LessStocksView.init();
-  if (view === 'rcm'         && window.RCMView)        return RCMView.init();
+  if (view === 'rcm'         && window.RCMView)         return RCMView.init();
   if (view === 'audit-log'   && window.AuditLogView)   return AuditLogView.init();
-  if (view === 'settings'    && window.SettingsView)   return SettingsView.init();
+  if (view === 'settings'    && window.SettingsView)    return SettingsView.init();
 }
 
 /* ─── Toast ───────────────────────────────────────────────────────────────── */
 window.toast = function(message, type = 'info', duration = 3500) {
   const container = document.getElementById('toast-container');
+  if (!container) return;
+  
   const el = document.createElement('div');
   el.className = `toast ${type}`;
   el.innerHTML = `
@@ -133,6 +151,7 @@ function _licenseReasonText(reason) {
     machine_mismatch: 'This license key is for a different machine.',
     invalid_expiry: 'License expiry is invalid.',
     expired: 'License has expired.',
+    clock_tampered: 'System clock error. Please sync your Windows time.'
   };
   return map[String(reason || '').trim()] || 'License validation failed.';
 }
@@ -165,7 +184,10 @@ function showLicenseModal(initialStatus = {}) {
 
         <div class="form-group" style="margin-bottom:10px;">
           <label>Machine ID (send this to owner)</label>
-          <input type="text" id="license-machine-id" readonly value="${machineId}">
+          <div style="display:flex; gap:8px;">
+            <input type="text" id="license-machine-id" readonly value="${machineId}" style="flex:1;">
+            <button class="btn btn-secondary btn-sm" id="license-copy-machine">Copy</button>
+          </div>
         </div>
 
         <div class="form-group">
@@ -176,7 +198,6 @@ function showLicenseModal(initialStatus = {}) {
         <div id="license-error" style="font-size:12px;color:var(--error);margin-top:8px;display:none;"></div>
 
         <div class="modal-actions" style="margin-top:14px;">
-          <button class="btn btn-secondary" id="license-copy-machine">Copy Machine ID</button>
           <button class="btn btn-danger" id="license-exit-app">Exit App</button>
           <button class="btn btn-primary" id="license-activate-btn">Activate</button>
         </div>
@@ -243,9 +264,7 @@ function showAppLockModal() {
             <button
               type="button"
               id="lock-pin-eye-btn"
-              aria-label="Show password"
-              title="Show password"
-              style="position:absolute;right:8px;top:50%;transform:translateY(-50%);width:28px;height:28px;display:inline-flex;align-items:center;justify-content:center;background:transparent;border:none;color:var(--text-muted);cursor:pointer;"
+              style="position:absolute;right:8px;top:50%;transform:translateY(-50%);width:28px;height:28px;background:transparent;border:none;color:var(--text-muted);cursor:pointer;"
             ></button>
           </div>
         </div>
@@ -260,27 +279,7 @@ function showAppLockModal() {
 
     const renderEyeIcon = (visible) => {
       if (!eyeBtn) return;
-      if (visible) {
-        eyeBtn.innerHTML = `
-          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="M17.94 17.94A10.9 10.9 0 0 1 12 20C7 20 2.73 16.89 1 12c.92-2.6 2.69-4.77 4.94-6.2"></path>
-            <path d="M10.58 10.58a2 2 0 0 0 2.84 2.84"></path>
-            <path d="M9.88 4.24A10.94 10.94 0 0 1 12 4c5 0 9.27 3.11 11 8a10.93 10.93 0 0 1-1.67 2.68"></path>
-            <path d="M1 1l22 22"></path>
-          </svg>
-        `;
-        eyeBtn.setAttribute('aria-label', 'Hide password');
-        eyeBtn.setAttribute('title', 'Hide password');
-      } else {
-        eyeBtn.innerHTML = `
-          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-            <circle cx="12" cy="12" r="3"></circle>
-          </svg>
-        `;
-        eyeBtn.setAttribute('aria-label', 'Show password');
-        eyeBtn.setAttribute('title', 'Show password');
-      }
+      eyeBtn.innerHTML = visible ? '🙈' : '👁️';
     };
 
     renderEyeIcon(false);
@@ -290,21 +289,12 @@ function showAppLockModal() {
       const normalizedInput = _normalizeDatePassword(pin);
       const normalizedToday = _todayDatePassword();
 
-      if (!normalizedInput) {
-        toast('Password must be a valid date in M/D/YYYY format.', 'error');
-        pinInput?.focus();
-        return;
-      }
-
       if (normalizedInput === normalizedToday) {
         overlay.remove();
         resolve(true);
       } else {
         toast('Invalid password.', 'error');
-        if (pinInput) {
-          pinInput.value = '';
-          pinInput.focus();
-        }
+        if (pinInput) { pinInput.value = ''; pinInput.focus(); }
       }
     };
 
@@ -318,10 +308,7 @@ function showAppLockModal() {
     });
 
     pinInput?.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') {
-        e.preventDefault();
-        submit();
-      }
+      if (e.key === 'Enter') { e.preventDefault(); submit(); }
     });
 
     document.body.appendChild(overlay);
@@ -333,30 +320,17 @@ function _normalizeDatePassword(value = '') {
   const text = String(value || '').trim();
   const match = /^(0?[1-9]|1[0-2])\/(0?[1-9]|[12]\d|3[01])\/(\d{2}|\d{4})$/.exec(text);
   if (!match) return '';
-
   const month = Number(match[1]);
   const day = Number(match[2]);
   const yearRaw = String(match[3]);
   const year = yearRaw.length === 2 ? (2000 + Number(yearRaw)) : Number(yearRaw);
   const date = new Date(year, month - 1, day);
-  if (
-    Number.isNaN(date.getTime()) ||
-    date.getFullYear() !== year ||
-    date.getMonth() !== month - 1 ||
-    date.getDate() !== day
-  ) {
-    return '';
-  }
-
   return `${month}/${day}/${year}`;
 }
 
 function _todayDatePassword() {
   const now = new Date();
-  const month = now.getMonth() + 1;
-  const day = now.getDate();
-  const year = now.getFullYear();
-  return `${month}/${day}/${year}`;
+  return `${now.getMonth() + 1}/${now.getDate()}/${now.getFullYear()}`;
 }
 
 function _toBool(value, fallback = false) {
@@ -366,7 +340,6 @@ function _toBool(value, fallback = false) {
     if (v === 'true') return true;
     if (v === 'false') return false;
   }
-  if (typeof value === 'number') return value !== 0;
   return fallback;
 }
 
@@ -392,31 +365,25 @@ const HIST_PAGE_SIZE = 20;
 let histPage = 1;
 let histData = [];
 
-/** Load and render the history panel */
 async function loadHistory() {
-  const search  = document.getElementById('hist-search')?.value?.toLowerCase() || '';
+  const search   = document.getElementById('hist-search')?.value?.toLowerCase() || '';
   const dateFrom = document.getElementById('hist-from')?.value || '';
-  const dateTo   = document.getElementById('hist-to')?.value   || '';
   const type     = document.getElementById('hist-type')?.value  || '';
 
-  let rows = await api.invoke('movements:history', { type, dateFrom, dateTo });
-
-  // Client-side text filter (search across stock + employee names)
+  let rows = await api.invoke('movements:history', { type, dateFrom });
   if (search) {
     rows = rows.filter(r =>
       r.stock_name?.toLowerCase().includes(search) ||
-      r.employee_name?.toLowerCase().includes(search) ||
-      r.department_name?.toLowerCase().includes(search)
+      r.employee_name?.toLowerCase().includes(search)
     );
   }
-
   histData = rows;
   histPage = 1;
   renderHistoryPage();
 }
 
 function renderHistoryPage() {
-  const body   = document.getElementById('hist-body');
+  const body = document.getElementById('hist-body');
   const paging = document.getElementById('hist-pagination');
   if (!body) return;
 
@@ -437,52 +404,24 @@ function renderHistoryPage() {
         <span class="history-date">${r.date}</span>
         <span class="history-type ${r.type}">${r.type}</span>
       </div>
-      <div class="history-stock">${r.stock_name} <span class="history-qty">×${r.qty} ${r.uom}</span></div>
-      <div class="history-emp">${r.employee_name} · ${r.department_name}</div>
-      ${r.note ? `<div class="history-emp" style="color:var(--text-dim);">${r.note}</div>` : ''}
+      <div class="history-stock">${r.stock_name} <span class="history-qty">×${r.qty}</span></div>
+      <div class="history-emp">${r.employee_name}</div>
     </div>
   `).join('');
 
-  // Pagination
   if (pages > 1) {
     paging.style.display = 'flex';
     paging.innerHTML = `
-      <button class="btn btn-secondary btn-xs" ${histPage <= 1 ? 'disabled' : ''} onclick="histPage--;renderHistoryPage()">‹</button>
-      <span class="page-info">Page ${histPage} / ${pages}</span>
-      <button class="btn btn-secondary btn-xs" ${histPage >= pages ? 'disabled' : ''} onclick="histPage++;renderHistoryPage()">›</button>
+      <button onclick="histPage--;renderHistoryPage()">‹</button>
+      <span>${histPage}/${pages}</span>
+      <button onclick="histPage++;renderHistoryPage()">›</button>
     `;
-  } else {
-    paging.style.display = 'none';
-  }
+  } else { paging.style.display = 'none'; }
 }
 
-// Expose for views to call after a successful transaction
 window.refreshHistory = loadHistory;
 
-// Wire history filter inputs
-['hist-search', 'hist-from', 'hist-to', 'hist-type'].forEach(id => {
-  const el = document.getElementById(id);
-  if (el) el.addEventListener('input', () => loadHistory());
-});
-
-document.getElementById('hist-clear')?.addEventListener('click', () => {
-  const search = document.getElementById('hist-search');
-  const from = document.getElementById('hist-from');
-  const type = document.getElementById('hist-type');
-
-  if (search) search.value = '';
-  if (from) from.value = '';
-  if (type) type.value = '';
-
-  loadHistory();
-});
-
 /* ─── Shared UI helpers ───────────────────────────────────────────────────── */
-
-/**
- * buildSelect(items, valueKey, labelKey, selectedValue, placeholder)
- * — generates an <option> list string for <select> elements.
- */
 window.buildOptions = function(items, valueKey, labelKey, selectedValue = '', placeholder = '— Select —') {
   const opts = [`<option value="">${placeholder}</option>`];
   for (const item of items) {
@@ -491,56 +430,6 @@ window.buildOptions = function(items, valueKey, labelKey, selectedValue = '', pl
     opts.push(`<option value="${val}" ${val === selectedValue ? 'selected' : ''}>${lbl}</option>`);
   }
   return opts.join('');
-};
-
-/**
- * makeAutocomplete(inputEl, items, valueKey, labelKey, onSelect)
- * — attaches a live-search dropdown to an input element.
- */
-window.makeAutocomplete = function(inputEl, items, valueKey, labelKey, onSelect) {
-  const wrap = document.createElement('div');
-  wrap.className = 'autocomplete-wrap';
-  inputEl.parentNode.insertBefore(wrap, inputEl);
-  wrap.appendChild(inputEl);
-
-  const list = document.createElement('div');
-  list.className = 'autocomplete-list';
-  wrap.appendChild(list);
-
-  let selectedId = '';
-
-  inputEl.addEventListener('input', () => {
-    const q = inputEl.value.toLowerCase();
-    const filtered = items.filter(i => i[labelKey].toLowerCase().includes(q) && i.is_active !== false);
-    list.innerHTML = filtered.slice(0, 10).map(i =>
-      `<div class="autocomplete-item" data-val="${i[valueKey]}">${i[labelKey]}</div>`
-    ).join('') || '<div class="autocomplete-item" style="color:var(--text-dim);">No results</div>';
-    list.classList.add('open');
-  });
-
-  list.addEventListener('mousedown', e => {
-    const item = e.target.closest('.autocomplete-item[data-val]');
-    if (!item) return;
-    selectedId = item.dataset.val;
-    const found = items.find(i => i[valueKey] === selectedId);
-    inputEl.value = found ? found[labelKey] : '';
-    list.classList.remove('open');
-    if (onSelect) onSelect(selectedId, found);
-  });
-
-  document.addEventListener('click', e => {
-    if (!wrap.contains(e.target)) list.classList.remove('open');
-  });
-
-  return {
-    getValue: () => selectedId,
-    setValue: (id) => {
-      selectedId = id;
-      const found = items.find(i => i[valueKey] === id);
-      inputEl.value = found ? found[labelKey] : '';
-    },
-    reset: () => { selectedId = ''; inputEl.value = ''; },
-  };
 };
 
 /* ─── Boot ────────────────────────────────────────────────────────────────── */
@@ -552,19 +441,20 @@ document.addEventListener('DOMContentLoaded', async () => {
     window.applyUiPreferences({ ui_theme: 'dark', ui_font_size: 'normal' });
   }
 
-  await ensureAppUnlocked();
-  await App.refreshLookups();
-  loadHistory();
+  // Chain of events for a secure portable boot
+  const unlocked = await ensureAppUnlocked();
+  if (unlocked) {
+    await ensureLicenseValid();
+    await App.refreshLookups();
+    loadHistory();
 
-  let startView = 'add-stocks';
-  try {
-    const saved = sessionStorage.getItem('activeView');
-    const allowed = ['add-stocks', 'less-stocks', 'rcm', 'audit-log', 'settings'];
-    if (saved && allowed.includes(saved)) startView = saved;
-  } catch {
-    // ignore storage errors
+    let startView = 'add-stocks';
+    try {
+      const saved = sessionStorage.getItem('activeView');
+      if (saved) startView = saved;
+    } catch {}
+
+    App.navigate(startView);
+    initView(startView);
   }
-
-  App.navigate(startView);
-  initView(startView);
 });

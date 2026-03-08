@@ -933,6 +933,7 @@ window.SettingsView = (() => {
   /* ── Public ───────────────────────────────────────────────────────────── */
   return {
     async init() {
+      alert('SettingsView loaded');
       await App.refreshLookups();
       renderShell();
     },

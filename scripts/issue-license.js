@@ -53,7 +53,7 @@ function usage() {
     '',
     'Options:',
     '  --machine   : Hardware fingerprint (24-char hex, get from app UI)',
-    '  --duration  : License duration (1w | 1m | 1y). Default: 1m',
+    '  --duration  : License duration (5m | 5min | 1h | 3d | 1w | 1m | 1y). Default: 1m',
     '  --expires   : Explicit expiry date (YYYY-MM-DD). Overrides --duration',
     '  --customer  : Optional customer name or branch identifier',
     '  --private-key: Optional path to private key (default: keys/private.pem)',
@@ -74,7 +74,13 @@ function resolveExpiryDate(durationType = '1m') {
   const expiryDate = new Date();
   const normalized = String(durationType || '1m').trim().toLowerCase();
 
-  if (normalized === '1w') {
+  if (normalized === '5m' || normalized === '5min') {
+    expiryDate.setMinutes(expiryDate.getMinutes() + 5);
+  } else if (normalized === '1h') {
+    expiryDate.setHours(expiryDate.getHours() + 1);
+  } else if (normalized === '3d') {
+    expiryDate.setDate(expiryDate.getDate() + 3);
+  } else if (normalized === '1w') {
     expiryDate.setDate(expiryDate.getDate() + 7);
   } else if (normalized === '1m') {
     expiryDate.setMonth(expiryDate.getMonth() + 1);

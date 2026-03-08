@@ -11,6 +11,7 @@ node_modules/
 # --- Build & Distribution ---
 # Keeps your repo fast by ignoring large .exe or installer files
 app_data/
+app_data
 dist/
 dist-fresh/
 release/
@@ -26,6 +27,7 @@ data/inventory.xlsx
 data/backups/
 data/exports/
 data/.electron/
+documentation/
 *.db
 *.sqlite
 *.sqlite3

@@ -33,43 +33,45 @@ const reports   = require('../domain/reports');
 const printer   = require('./print');
 const { buildMenu } = require('./menu');
 
-// ─── Data directory resolution ────────────────────────────────────────────────
-
-function configureRuntimePaths() {
-  // --- PORTABLE MODE: Set userData path FIRST (before any file operations) ---
-  if (app.isPackaged) {
-    // Finds the folder where your .exe is sitting (USB drive root when portable)
-    const exeDir = path.dirname(process.execPath);
-    const userDataPath = path.join(exeDir, 'app_data');
-    
-    // Forces Electron to store EVERYTHING (logs, cache, userData, etc.) in app_data
-    app.setPath('userData', userDataPath);
-    
-    console.log(`[Portable Mode] userData set to: ${userDataPath}`);
-  }
-  // In development, Electron uses default OS paths automatically
-}
+// ─── Data directory resolution (Portable PC Architect Style) ──────────────────
 
 function resolveDataDir() {
+  const exeDir = path.dirname(process.execPath);
+
   if (!app.isPackaged) {
     // Development: use project root /data
     return path.join(__dirname, '..', '..', 'data');
   }
 
-  // --- PORTABLE MODE: Data folder inside app_data ---
-  // Now that userData is set, we store data inside it
-  const userDataPath = app.getPath('userData');
-  const dataDir = path.join(userDataPath, 'data');
-  
-  // Self-healing: Create the data folder if it doesn't exist
-  if (!fs.existsSync(dataDir)) {
-    fs.mkdirSync(dataDir, { recursive: true });
-    console.log(`[Portable Mode] Created data directory: ${dataDir}`);
+  if (process.platform === 'darwin') {
+    // macOS: <parent-of-.app>/app_data/
+    return path.join(exeDir, '..', '..', '..', 'app_data');
   }
-  
-  return dataDir;
+
+  // Windows/Linux: Portable executable sits right next to app_data
+  return path.join(exeDir, 'app_data');
 }
 
+function configureRuntimePaths() {
+  const DATA_DIR = resolveDataDir();
+  
+  // Rule: Redirect all Electron "junk" to the USB
+  // This includes LocalStorage, IndexedDB, and Logs
+  app.setPath('userData', DATA_DIR); 
+  
+  // Rule: Redirect Sessions and Cache
+  const sessionDir = path.join(DATA_DIR, 'session');
+  const cacheDir = path.join(DATA_DIR, 'cache');
+
+  fs.mkdirSync(DATA_DIR, { recursive: true });
+  fs.mkdirSync(sessionDir, { recursive: true });
+  fs.mkdirSync(cacheDir, { recursive: true });
+
+  app.setPath('sessionData', sessionDir);
+  app.commandLine.appendSwitch('disk-cache-dir', cacheDir);
+}
+
+// Execute immediately before app boot
 configureRuntimePaths();
 
 // ─── App boot ─────────────────────────────────────────────────────────────────
@@ -617,22 +619,25 @@ ipcMain.handle('settings:save', safe((data) => {
   return { ok: true };
 }));
 
-// Logo upload: user picks a file; we copy it to ./data/assets/logo.png
+// Logo upload: user picks a file; we copy it to ./app_data/assets/logo.png
 ipcMain.handle('settings:uploadLogo', safe(async () => {
   const { filePaths } = await dialog.showOpenDialog(mainWindow, {
-    title:      'Select Company Logo',
-    filters:    [{ name: 'Images', extensions: ['png', 'jpg', 'jpeg', 'svg', 'webp'] }],
+    title: 'Select Company Logo',
+    filters: [{ name: 'Images', extensions: ['png', 'jpg', 'jpeg', 'svg', 'webp'] }],
     properties: ['openFile'],
   });
   if (!filePaths || filePaths.length === 0) return { ok: false, error: 'Cancelled' };
 
-  const src  = filePaths[0];
-  const dest = path.join(DATA_DIR, 'assets', 'logo.png');
+  const src = filePaths[0];
+  const assetsDir = path.join(app.getPath('userData'), 'assets');
+  const dest = path.join(assetsDir, 'logo.png');
+
+  fs.mkdirSync(assetsDir, { recursive: true });
   fs.copyFileSync(src, dest);
 
-  // Update settings with the relative logo path
+  // Update settings with a RELATIVE path reference
   const settings = db.getSettings();
-  settings.logo_path = './data/assets/logo.png';
+  settings.logo_path = './assets/logo.png'; // No drive letter, just relative to DATA_DIR
   db.saveSettings(settings);
 
   return { ok: true, logoPath: dest };

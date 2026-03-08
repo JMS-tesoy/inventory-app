@@ -27,28 +27,17 @@
       "package.json"
     ],
     "win": {
-      "signAndEditExecutable": false,
+      "target": ["portable"],
       "icon": "assets/icon.ico",
-      "target": [
-        {
-          "target": "portable",
-          "arch": [
-            "x64"
-          ]
-        }
-      ],
-      "artifactName": "InventoryApp-win-portable.exe"
+      "signAndEditExecutable": false
+    },
+    "portable": {
+      "artifactName": "${productName}_v${version}_Offline.${ext}",
+      "requestExecutionLevel": "user",
+      "unicode": true
     },
     "mac": {
-      "target": [
-        {
-          "target": "zip",
-          "arch": [
-            "x64",
-            "arm64"
-          ]
-        }
-      ],
+      "target": ["zip"],
       "artifactName": "InventoryApp-mac.zip"
     }
   },

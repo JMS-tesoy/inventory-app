@@ -910,6 +910,7 @@ window.SettingsView = (() => {
       const close = (value) => {
         overlay.remove();
         resolve(value);
+      };
 
       const input = overlay.querySelector('#prompt-text-value');
       overlay.querySelector('#prompt-text-cancel')?.addEventListener('click', () => close(''));

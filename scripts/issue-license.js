@@ -48,16 +48,18 @@ function ensureKeysExist() {
 function usage() {
   console.log([
     'Usage:',
+    '  node scripts/issue-license.js --machine <MACHINE_ID> [--duration 1m] [--customer "Name"]',
     '  node scripts/issue-license.js --machine <MACHINE_ID> --expires <YYYY-MM-DD> [--customer "Name"]',
     '',
     'Options:',
     '  --machine   : Hardware fingerprint (24-char hex, get from app UI)',
-    '  --expires   : Expiry date in YYYY-MM-DD format',
+    '  --duration  : License duration (1w | 1m | 1y). Default: 1m',
+    '  --expires   : Explicit expiry date (YYYY-MM-DD). Overrides --duration',
     '  --customer  : Optional customer name or branch identifier',
     '  --private-key: Optional path to private key (default: keys/private.pem)',
     '',
     'Example:',
-    '  node scripts/issue-license.js --machine A1B2C3D4E5F6G7H8I9J0 --expires 2027-12-31 --customer "Branch Office"',
+    '  node scripts/issue-license.js --machine A1B2C3D4E5F6G7H8I9J0 --duration 1y --customer "Branch Office"',
     '',
   ].join('\n'));
 }
@@ -68,15 +70,56 @@ function getArg(flag) {
   return String(process.argv[idx + 1] || '').trim();
 }
 
+function resolveExpiryDate(durationType = '1m') {
+  const expiryDate = new Date();
+  const normalized = String(durationType || '1m').trim().toLowerCase();
+
+  if (normalized === '1w') {
+    expiryDate.setDate(expiryDate.getDate() + 7);
+  } else if (normalized === '1m') {
+    expiryDate.setMonth(expiryDate.getMonth() + 1);
+  } else if (normalized === '1y') {
+    expiryDate.setFullYear(expiryDate.getFullYear() + 1);
+  } else {
+    // Default to 1 month if input is invalid.
+    expiryDate.setMonth(expiryDate.getMonth() + 1);
+  }
+
+  return expiryDate;
+}
+
+function issueLicense(customerName, machineId, privateKeyPem, durationType = '1m', explicitExpiresAt = null) {
+  const expiresAtDate = explicitExpiresAt || resolveExpiryDate(durationType);
+
+  const payload = {
+    machineId: String(machineId || '').toUpperCase(),
+    expiresAt: expiresAtDate.toISOString(),
+    issuedAt: new Date().toISOString(),
+    customer: String(customerName || ''),
+  };
+
+  const payloadB64 = toBase64Url(JSON.stringify(payload));
+  const signer = crypto.createSign('RSA-SHA256');
+  signer.update(payloadB64);
+  signer.end();
+
+  const signature = signer.sign(privateKeyPem);
+  const signatureB64 = toBase64Url(signature);
+  const token = `${payloadB64}.${signatureB64}`;
+
+  return { token, payload };
+}
+
 // ─── Main Execution ──────────────────────────────────────────────────────────
 ensureKeysExist();
 
 const privateKeyPath = getArg('--private-key') || defaultPrivateKeyPath;
 const machineId = getArg('--machine').toUpperCase();
+const duration = getArg('--duration') || '1m';
 const expiresDate = getArg('--expires');
 const customer = getArg('--customer');
 
-if (!machineId || !expiresDate) {
+if (!machineId) {
   usage();
   process.exit(1);
 }
@@ -86,35 +129,30 @@ if (!fs.existsSync(privateKeyPath)) {
   process.exit(1);
 }
 
-const expiresAt = new Date(`${expiresDate}T23:59:59.999Z`);
-if (Number.isNaN(expiresAt.getTime())) {
-  console.error('❌ Invalid --expires date. Use format YYYY-MM-DD (e.g., 2027-12-31)');
-  process.exit(1);
+let explicitExpiresAt = null;
+if (expiresDate) {
+  explicitExpiresAt = new Date(`${expiresDate}T23:59:59.999Z`);
+  if (Number.isNaN(explicitExpiresAt.getTime())) {
+    console.error('❌ Invalid --expires date. Use format YYYY-MM-DD (e.g., 2027-12-31)');
+    process.exit(1);
+  }
 }
 
-const payload = {
-  machineId,
-  expiresAt: expiresAt.toISOString(),
-  issuedAt: new Date().toISOString(),
-  customer: customer || '',
-};
-
-const payloadB64 = toBase64Url(JSON.stringify(payload));
-const signer = crypto.createSign('RSA-SHA256');
-signer.update(payloadB64);
-signer.end();
-
 const privateKeyPem = fs.readFileSync(privateKeyPath, 'utf8');
-const signature = signer.sign(privateKeyPem);
-const signatureB64 = toBase64Url(signature);
-
-const token = `${payloadB64}.${signatureB64}`;
+const { token, payload } = issueLicense(
+  customer,
+  machineId,
+  privateKeyPem,
+  duration,
+  explicitExpiresAt
+);
 
 console.log('\n╔════════════════════════════════════════════════════════════════╗');
 console.log('║                    LICENSE TOKEN GENERATED                     ║');
 console.log('╚════════════════════════════════════════════════════════════════╝\n');
 console.log('Customer   :', customer || '(none)');
 console.log('Machine ID :', machineId);
+console.log('Duration   :', expiresDate ? '(custom date via --expires)' : duration);
 console.log('Issued At  :', payload.issuedAt);
 console.log('Expires At :', payload.expiresAt);
 console.log('\n' + '─'.repeat(64));

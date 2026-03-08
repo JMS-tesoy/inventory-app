@@ -1,0 +1,25 @@
+Phase 1 (implement first)
+[✅] Auto Backup
+	- [✅] Create timestamped backups of data/inventory.xlsx
+	- [✅] Keep last N backups (example: 10)
+	- [✅] Auto-run backup on app startup
+	- [✅] Background auto-backup scheduler (configurable interval)
+	- [✅] Settings UI controls (enable/disable, interval, keep-last)
+
+[✅] Restore Backup
+	- [✅] “Restore” button in UI
+	- [✅] Select a backup file and replace current inventory data safely
+
+[✅] Low-Stock Alerts
+	- [✅] Per-item minimum stock threshold
+	- [✅] Highlight low-stock rows + quick filter “Low Stock Only”
+
+Phase 2
+[✅] Import/Export CSV
+[✅] Stock movement history (audit log)
+[✅] Dashboard cards (total, low stock, categories)
+
+Phase 3
+[✅] Barcode scanner support
+[✅] Password lock
+[✅] Printable PDF reports

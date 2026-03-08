@@ -1,0 +1,52 @@
+# Python Virtual Environment (Crucial!)
+.venv/
+venv/
+ENV/
+
+# --- Dependencies ---
+node_modules/
+.pnp/
+.pnp.js
+
+# --- Build & Distribution ---
+# Keeps your repo fast by ignoring large .exe or installer files
+dist/
+dist-fresh/
+release/
+out/
+build/
+*.exe
+*.dmg
+*.AppImage
+
+# --- Local Data & Portable Storage ---
+# Protects your actual inventory records and backups from being public
+data/inventory.xlsx
+data/backups/
+data/exports/
+data/.electron/
+*.db
+*.sqlite
+*.sqlite3
+
+# --- Environment & Credentials ---
+# Critical for security if you use API keys later
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# --- Logs & Temp Files ---
+# Stops the "syncing" clutter you see in your current push
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.eslintcache
+
+# --- IDE & System ---
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

@@ -1,0 +1,63 @@
+{
+  "name": "inventory-app",
+  "version": "1.0.0",
+  "author": "Inventory App Team",
+  "description": "Portable offline-first stock inventory desktop app",
+  "main": "src/main/main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . --dev",
+    "build:win": "electron-builder --win portable",
+    "build:portable": "npm run build:win && node scripts/make-portable.js",
+    "build:portable:clean": "node scripts/clean-portable.js && npm run build:portable",
+    "package:zip": "npm run build:portable:clean && powershell -ExecutionPolicy Bypass -File scripts/zip-portable.ps1",
+    "build:mac": "electron-builder --mac zip",
+    "backup": "node scripts/backup.js",
+    "license:issue": "node scripts/issue-license.js"
+  },
+  "build": {
+    "appId": "com.inventory.app",
+    "productName": "InventoryApp",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "src/**/*",
+      "assets/**/*",
+      "package.json"
+    ],
+    "win": {
+      "signAndEditExecutable": false,
+      "icon": "assets/icon.ico",
+      "target": [
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "artifactName": "InventoryApp-win-portable.exe"
+    },
+    "mac": {
+      "target": [
+        {
+          "target": "zip",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        }
+      ],
+      "artifactName": "InventoryApp-mac.zip"
+    }
+  },
+  "dependencies": {
+    "uuid": "^9.0.0",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "electron": "^28.0.0",
+    "electron-builder": "^24.9.1"
+  }
+}

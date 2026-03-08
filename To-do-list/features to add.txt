@@ -1,0 +1,12 @@
+Auto backup (daily/weekly copy of data file)
+One-click Restore Backup
+CSV/Excel Import & Export
+Low-stock alerts (highlight + threshold settings)
+Barcode/QR support (scan to add/find items)
+Stock movement history (who/when/what changed)
+Dashboard (total items, low stock, top categories)
+[✅] Search + filters (category, supplier, date, status)
+Print labels / reports (PDF)
+Dark mode + larger font mode
+Data lock/password (basic protection for shared USB use)
+Update checker (manual “Check for new version”)

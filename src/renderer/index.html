@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<!--
+  FILE: src/renderer/index.html
+  PURPOSE: App shell — top navigation, view containers, toast holder.
+           All dynamic content is injected by JS view files.
+  CONNECTED TO: styles.css (styling)
+                app.js (routing, navigation)
+                views/*.js (view logic)
+-->
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy"
+      content="default-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: file:;">
+  <title>Inventory App</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div id="app">
+
+  <!-- ── Top Navigation ───────────────────────────────────── -->
+  <nav id="topnav">
+    <div class="logo-area">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#2E7CF6" stroke-width="2" width="26" height="26">
+        <rect x="2" y="3" width="20" height="14" rx="2"/>
+        <path d="M8 21h8M12 17v4"/>
+        <path d="M7 8h10M7 11h6"/>
+      </svg>
+      <div class="app-brand">
+        <span class="app-name">InventoryApp</span>
+        <span class="app-attribution">Powerd by JMS-Dev@2026</span>
+      </div>
+    </div>
+
+    <button class="nav-btn active" data-view="add-stocks">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M12 5v14M5 12h14"/>
+      </svg>
+      Add Stocks
+    </button>
+
+    <button class="nav-btn" data-view="less-stocks">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M5 12h14"/>
+        <path d="M3 6l9 3 9-3M3 18l9-3 9 3"/>
+      </svg>
+      Less Stocks
+    </button>
+
+    <button class="nav-btn" data-view="rcm">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <rect x="3" y="4" width="18" height="16" rx="2"/>
+        <path d="M7 9h10M7 13h10M7 17h6"/>
+      </svg>
+      RCM
+    </button>
+
+    <button class="nav-btn" data-view="audit-log">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M9 3h6"/>
+        <path d="M10 7h4"/>
+        <rect x="4" y="3" width="16" height="18" rx="2"/>
+        <path d="M8 12h8M8 16h5"/>
+      </svg>
+      Audit Log
+    </button>
+
+    <button class="nav-btn" data-view="settings">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="3"/>
+        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+      </svg>
+      Settings
+    </button>
+
+  </nav>
+
+  <!-- ── Main Content ──────────────────────────────────────── -->
+  <div id="main-content">
+
+    <!-- Add Stocks View -->
+    <div id="view-add-stocks" class="view active">
+      <!-- Injected by views/add-stocks.js -->
+    </div>
+
+    <!-- Less Stocks View -->
+    <div id="view-less-stocks" class="view">
+      <!-- Injected by views/less-stocks.js -->
+    </div>
+
+    <!-- RCM View -->
+    <div id="view-rcm" class="view" style="grid-column: 1/-1;">
+      <!-- Injected by views/rcm.js -->
+    </div>
+
+    <!-- Audit Log View -->
+    <div id="view-audit-log" class="view" style="grid-column: 1/-1;">
+      <!-- Injected by views/audit-log.js -->
+    </div>
+
+    <!-- Settings View -->
+    <div id="view-settings" class="view" style="grid-column: 1/-1;">
+      <!-- Injected by views/settings.js -->
+    </div>
+
+    <!-- History Panel (shown alongside add/less views) -->
+    <div id="history-panel">
+      <div class="panel-header">Recent History</div>
+      <div class="panel-filters">
+        <input type="text" id="hist-search" placeholder="Filter by stock or employee…">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+          <input type="date" id="hist-from" title="From date">
+          <button class="btn btn-secondary btn-sm" id="hist-clear" title="Clear filters">Clear</button>
+        </div>
+        <select id="hist-type">
+          <option value="">All types</option>
+          <option value="ADD">ADD only</option>
+          <option value="LESS">LESS only</option>
+        </select>
+      </div>
+      <div class="panel-body" id="hist-body">
+        <div class="loading">Loading history…</div>
+      </div>
+      <div class="pagination" id="hist-pagination" style="display:none;"></div>
+    </div>
+
+  </div><!-- /#main-content -->
+</div><!-- /#app -->
+
+<!-- Toast container -->
+<div id="toast-container"></div>
+
+<!-- Scripts -->
+<script src="app.js"></script>
+<script src="views/add-stocks.js"></script>
+<script src="views/less-stocks.js"></script>
+<script src="views/rcm.js"></script>
+<script src="views/audit-log.js"></script>
+<script src="views/settings.js"></script>
+</body>
+</html>

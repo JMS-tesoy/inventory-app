@@ -35,37 +35,39 @@ const { buildMenu } = require('./menu');
 
 // ─── Data directory resolution ────────────────────────────────────────────────
 
+function configureRuntimePaths() {
+  // --- PORTABLE MODE: Set userData path FIRST (before any file operations) ---
+  if (app.isPackaged) {
+    // Finds the folder where your .exe is sitting (USB drive root when portable)
+    const exeDir = path.dirname(process.execPath);
+    const userDataPath = path.join(exeDir, 'app_data');
+    
+    // Forces Electron to store EVERYTHING (logs, cache, userData, etc.) in app_data
+    app.setPath('userData', userDataPath);
+    
+    console.log(`[Portable Mode] userData set to: ${userDataPath}`);
+  }
+  // In development, Electron uses default OS paths automatically
+}
+
 function resolveDataDir() {
   if (!app.isPackaged) {
     // Development: use project root /data
     return path.join(__dirname, '..', '..', 'data');
   }
 
-  const exe = process.execPath; // full path to the running executable
-
-  if (process.platform === 'darwin') {
-    // exe is inside: SomeApp.app/Contents/MacOS/SomeApp
-    // We want:       <parent-of-.app>/data/
-    return path.join(path.dirname(exe), '..', '..', '..', 'data');
+  // --- PORTABLE MODE: Data folder inside app_data ---
+  // Now that userData is set, we store data inside it
+  const userDataPath = app.getPath('userData');
+  const dataDir = path.join(userDataPath, 'data');
+  
+  // Self-healing: Create the data folder if it doesn't exist
+  if (!fs.existsSync(dataDir)) {
+    fs.mkdirSync(dataDir, { recursive: true });
+    console.log(`[Portable Mode] Created data directory: ${dataDir}`);
   }
-
-  // Windows / Linux: exe is in the app folder; data sits beside it
-  return path.join(path.dirname(exe), 'data');
-}
-
-function configureRuntimePaths() {
-  const runtimeDataDir = resolveDataDir();
-  const electronDataDir = path.join(runtimeDataDir, '.electron');
-  const sessionDir = path.join(electronDataDir, 'session');
-  const cacheDir = path.join(electronDataDir, 'cache');
-
-  fs.mkdirSync(electronDataDir, { recursive: true });
-  fs.mkdirSync(sessionDir, { recursive: true });
-  fs.mkdirSync(cacheDir, { recursive: true });
-
-  app.setPath('userData', electronDataDir);
-  app.setPath('sessionData', sessionDir);
-  app.commandLine.appendSwitch('disk-cache-dir', cacheDir);
+  
+  return dataDir;
 }
 
 configureRuntimePaths();

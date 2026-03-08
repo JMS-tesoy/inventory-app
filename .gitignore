@@ -10,6 +10,7 @@ node_modules/
 
 # --- Build & Distribution ---
 # Keeps your repo fast by ignoring large .exe or installer files
+app_data/
 dist/
 dist-fresh/
 release/

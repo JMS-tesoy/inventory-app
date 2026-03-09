@@ -66,6 +66,13 @@
       Audit Log
     </button>
 
+    <button class="nav-btn" data-view="delivery">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <rect x="3" y="6" width="18" height="12" rx="2"/>
+        <path d="M7 10h10M7 14h6"/>
+      </svg>
+      Delivery
+    </button>
     <button class="nav-btn" data-view="settings">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <circle cx="12" cy="12" r="3"/>
@@ -97,6 +104,11 @@
     <!-- Audit Log View -->
     <div id="view-audit-log" class="view" style="grid-column: 1/-1;">
       <!-- Injected by views/audit-log.js -->
+    </div>
+
+    <!-- Delivery View -->
+    <div id="view-delivery" class="view" style="grid-column: 1/-1;">
+      <!-- Injected by views/delivery.js -->
     </div>
 
     <!-- Settings View -->
@@ -137,6 +149,7 @@
 <script src="views/less-stocks.js"></script>
 <script src="views/rcm.js"></script>
 <script src="views/audit-log.js"></script>
+<script src="views/delivery.js"></script>
 <script src="views/settings.js"></script>
 </body>
 </html>

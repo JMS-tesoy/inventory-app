@@ -29,6 +29,14 @@ const SHEET_NAMES = {
  * The order here dictates the column order in the Excel file.
  */
 const SCHEMA = {
+    Deliveries: [
+      'delivery_id',
+      'date',
+      'recipient',
+      'items',
+      'status',
+      'note',
+    ],
   [SHEET_NAMES.SETTINGS]: [
     'company_name',
     'company_address',

@@ -38,6 +38,10 @@ window.App = {
     document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
     const view = document.getElementById(`view-${viewName}`);
     if (view) view.classList.add('active');
+    // Notion-style Delivery page logic
+    if (viewName === 'delivery' && typeof window.initView === 'function') {
+      window.initView('delivery');
+    }
 
     // 3. Persistent Session
     try {
@@ -51,7 +55,7 @@ window.App = {
     const mainContent = document.getElementById('main-content');
     
     // Check if the current view is a "Full Width" view
-    const isFullWidth = (viewName === 'settings' || viewName === 'rcm' || viewName === 'audit-log');
+    const isFullWidth = (viewName === 'settings' || viewName === 'rcm' || viewName === 'audit-log' || viewName === 'delivery');
 
     if (panel) {
       panel.style.display = isFullWidth ? 'none' : 'flex';
@@ -87,6 +91,7 @@ function initView(view) {
   if (view === 'less-stocks' && window.LessStocksView) return LessStocksView.init();
   if (view === 'rcm'         && window.RCMView)         return RCMView.init();
   if (view === 'audit-log'   && window.AuditLogView)   return AuditLogView.init();
+  if (view === 'delivery'    && typeof window.renderDeliveryView === 'function') return renderDeliveryView();
   if (view === 'settings'    && window.SettingsView)    return SettingsView.init();
 }
 

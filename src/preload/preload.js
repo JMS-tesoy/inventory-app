@@ -27,6 +27,7 @@ const ALLOWED_CHANNELS = [
   'report:print', 'report:exportPDF',
   'data:openFolder', 'data:backup', 'data:restore', 'data:exportCSV', 'data:importCSV',
   'license:status', 'license:activate', 'app:quit',
+  'deliveries:get', 'deliveries:save', 'deliveries:append',
 ];
 
 contextBridge.exposeInMainWorld('api', {

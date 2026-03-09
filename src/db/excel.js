@@ -94,6 +94,29 @@ function _ensureHeaders(ws, headers) {
 }
 
 // ─── Core helpers ────────────────────────────────────────────────────────────
+/**
+ * getDeliveries() — returns all delivery rows.
+ */
+function getDeliveries() {
+  return sheetToObjects('Deliveries');
+}
+
+/**
+ * saveDeliveries(rows) — replaces the Deliveries sheet with given rows.
+ */
+function saveDeliveries(rows) {
+  objectsToSheet('Deliveries', rows);
+  saveWorkbook();
+}
+
+/**
+ * appendDelivery(row) — appends a single delivery row.
+ */
+function appendDelivery(row) {
+  const existing = getDeliveries();
+  existing.push(row);
+  saveDeliveries(existing);
+}
 
 /**
  * saveWorkbook() — flushes the in-memory workbook to disk.

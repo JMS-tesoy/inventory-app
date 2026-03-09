@@ -1,3 +1,4 @@
+// ...existing code...
 /**
  * FILE: src/main/main.js
  * PURPOSE: Electron entry point. Creates the BrowserWindow, resolves the data
@@ -736,6 +737,10 @@ function _buildReportHTML(reportType, params) {
 }
 
 // ── Data Tools ────────────────────────────────────────────────────────────────
+// ── Deliveries ──────────────────────────────────────────────────────────────────
+ipcMain.handle('deliveries:get', safe(() => db.getDeliveries()));
+ipcMain.handle('deliveries:save', safe((rows) => { db.saveDeliveries(rows); return { ok: true }; }));
+ipcMain.handle('deliveries:append', safe((row) => { db.appendDelivery(row); return { ok: true }; }));
 ipcMain.handle('data:openFolder', safe(() => {
   shell.openPath(DATA_DIR);
   return { ok: true };

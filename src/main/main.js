@@ -737,6 +737,7 @@ function _buildReportHTML(reportType, params) {
 }
 
 // ── Data Tools ────────────────────────────────────────────────────────────────
+console.log('DEBUG db object:', db); // Debugging import/export
 // ── Deliveries ──────────────────────────────────────────────────────────────────
 ipcMain.handle('deliveries:get', safe(() => db.getDeliveries()));
 ipcMain.handle('deliveries:save', safe((rows) => { db.saveDeliveries(rows); return { ok: true }; }));

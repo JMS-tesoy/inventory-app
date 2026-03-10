@@ -400,4 +400,5 @@ module.exports = {
   getMovements, appendMovements, saveMovements,
   getBalances, recomputeBalances,
   getEmployeeStockBalance, getTotalStockBalance,
+  getDeliveries, saveDeliveries, appendDelivery,
 };
